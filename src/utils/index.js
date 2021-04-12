@@ -1,1 +1,0 @@
-export const ApiWebUrl = "https://servicios.campus.pe/";

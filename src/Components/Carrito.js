@@ -1,69 +1,31 @@
 import React, { Component } from "react";
-//import { FontAwesomeIcon  } from '@fortawesome/react-fontawesome'
-//import { faShoppingCart } from "@fortawesome/free-solid-svg-icons";
+import Swal from "sweetalert2";
 import { ApiWebUrl } from "./../utils/index";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 //Context: 1
-import { GlobalContext } from './../context/GlobalContext'
+import { GlobalContext } from "./../context/GlobalContext";
 
 export default class Carrito extends Component {
-
   //Context: 2
-  static contextType = GlobalContext
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      items: [],
-      pagoTotal: 0.0,
-    };
-  }
+  static contextType = GlobalContext;
 
   componentDidMount() {}
 
-  colocarDatosEstado = () => {};
+  vaciarCarrito = () => this.context.vaciarCarrito();
 
-  vaciarCarrito = () => this.context.vaciarCarrito()
+  removerProducto = (producto) => this.context.removerProducto(producto);
 
-  removerProducto = (producto) => this.context.removerProducto(producto)
-
-  procesarPago(idempleado, idcliente, pedidosDetalles) {
-    const ruta = ApiWebUrl + "insertarpedidostodo.php";
-
-    var formData = new FormData();
-    formData.append("idempleado", idempleado);
-    formData.append("idcliente", idcliente);
-    formData.append("pedidosdetalles", JSON.stringify(pedidosDetalles));
-
-    fetch(ruta, {
-      method: "POST",
-      body: formData,
-    })
-      .then((res) => res.json())
-      .catch((error) => console.error("Error:", error))
-      .then((response) => {
-        //obtenemos el id tipo número
-        if (typeof response === "number") {
-          alert("Se grabo pedido exitosamente: #" + response);
-          localStorage.removeItem("carrito");
-          this.colocarDatosEstado();
-        } else {
-          alert("Error con el pedido");
-        }
-      });
-  }
-
-  handleSumTotal = () => {    
-    const carrito = this.context.carrito
+  handleSumTotal = () => {
+    const carrito = this.context.carrito;
     let sum = 0;
-    for( let i in carrito ){        
-      sum += parseInt(carrito[i].precio) * carrito[i].cantidad 
+    for (let i in carrito) {
+      sum += parseInt(carrito[i].precio) * carrito[i].cantidad;
     }
-    return sum
+    return sum;
   };
- 
+
   dibujarCarrito(datosCarrito) {
     return (
       <>
@@ -81,7 +43,11 @@ export default class Carrito extends Component {
           <tbody>
             {datosCarrito.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center p-5">Agrege items al carrito</td>
+                <td colSpan="6" className="text-center p-5">
+                  😔😢😰🥺😭☹️💔
+                  <br />
+                  Agrege productos al carrito.
+                </td>
               </tr>
             ) : (
               datosCarrito.map((item) => (
@@ -91,7 +57,14 @@ export default class Carrito extends Component {
                   <td>{item.precio}</td>
                   <td>{item.cantidad}</td>
                   <td>{(item.precio * item.cantidad).toFixed(2)}</td>
-                  <td><FontAwesomeIcon icon={faTrash} className="producto_icon-trash" style={{cursor:"pointer"}} onClick={() => this.removerProducto(item)}/></td>
+                  <td>
+                    <FontAwesomeIcon
+                      icon={faTrash}
+                      className="producto_icon-trash"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => this.removerProducto(item)}
+                    />
+                  </td>
                 </tr>
               ))
             )}
@@ -109,8 +82,7 @@ export default class Carrito extends Component {
   }
 
   dibujarPagoTotal() {
-
-    let sumaPagoTotal = this.handleSumTotal()
+    let sumaPagoTotal = this.handleSumTotal();
 
     return (
       <div className="card text-center">
@@ -141,24 +113,66 @@ export default class Carrito extends Component {
   }
 
   validarProcesoPago() {
-    if(!this.context.usuario){
-      alert("MENSAJE: Por favor inicie sesión.")
-    }
+    if (!this.context.usuario)
+      return Swal.fire({
+        title: "Error:",
+        text: "Por favor inicie sesión.",
+        confirmButtonText: "Ok",
+        icon: "error",
+      });
+
+    const pedidosDetalles = [];
+    //arreglamos los datos para el json
+    this.context.carrito.forEach((producto) => {
+      pedidosDetalles.push({
+        idproducto: producto.idproducto,
+        precio: producto.precio,
+        cantidad: producto.cantidad,
+      });
+    });
+    //guardamos el dato en la bd
+    this.procesarPago(10, this.context.usuario.idcliente, pedidosDetalles);
   }
 
- 
+  procesarPago(idempleado, idcliente, pedidosDetalles) {
+    const ruta = ApiWebUrl + "insertarpedidostodo.php";
+
+    var formData = new FormData();
+    formData.append("idempleado", idempleado);
+    formData.append("idcliente", idcliente);
+    formData.append("pedidosdetalles", JSON.stringify(pedidosDetalles));
+
+    fetch(ruta, {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.json())
+      .catch((error) => console.error("Error:", error))
+      .then((response) => {
+        //obtenemos el id tipo número
+        if (typeof response === "number") {
+          //limpiamos el carrito
+          this.context.vaciarCarrito();
+          Swal.fire({
+            title: "Mensaje:",
+            text: "Se grabo el pedido exitosamente: #" + response,
+            confirmButtonText: "Ok",
+            icon: "success",
+          });
+        } else {
+          alert("Error con el pedido");
+        }
+      });
+  }
+
   render() {
     return (
       <section id="carrito" className="padded">
         <div className="container">
           <h2>Carrito</h2>
           <div className="row">
-            <div className="col-md-8">
-              {this.dibujarCarrito(this.context.carrito)}
-            </div>              
-            <div className="col-md-4">
-              { this.dibujarPagoTotal()}
-            </div>
+            <div className="col-md-8" >{this.dibujarCarrito(this.context.carrito)}</div>
+            <div className="col-md-4">{this.dibujarPagoTotal()}</div>
           </div>
         </div>
       </section>

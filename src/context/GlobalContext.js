@@ -3,43 +3,52 @@ import { createContext, Component } from "react";
 export const GlobalContext = createContext();
 
 export class GlobalProvider extends Component {
-
   state = {
     carrito: [],
-    usuario: null
+    usuario: null,
   };
+
+  componentDidMount() {
+    const tiendaUniData = JSON.parse(localStorage.getItem("TiendaUniData"));
+    if (tiendaUniData !== null) {
+      this.setState(tiendaUniData);
+    }
+  }
+
 
   // CARRITO
   buscarProductoIndex = (producto) => {
     let carrito = this.state.carrito;
     //findIndex() si no encuentra retorna: -1
-    return carrito.findIndex( (p) => p.idproducto === producto.idproducto );
+    return carrito.findIndex((p) => p.idproducto === producto.idproducto);
   };
 
   agregarProducto = (producto) => {
-
     let carrito = this.state.carrito;
     const pIndex = this.buscarProductoIndex(producto);
-    
+
     if (pIndex !== -1) {
-      carrito[pIndex].cantidad += 1
-      alert("El producto ya existe, se aumento +1:\n Cantidad actual: " + carrito[pIndex].cantidad)
+      carrito[pIndex].cantidad += 1;
+      alert(
+        "El producto ya existe, se aumento +1:\n Cantidad actual: " +
+          carrito[pIndex].cantidad
+      );
     } else {
-      carrito = [ ...carrito, { ...producto, cantidad: 1 }  ]
+      carrito = [...carrito, { ...producto, cantidad: 1 }];
     }
 
-    this.setState({...this.state, carrito });
+    this.setState({ ...this.state, carrito });
   };
 
   removerProducto = (producto) => {
-    let carrito = this.state.carrito
+    let carrito = this.state.carrito;
     this.setState({
       ...this.state,
       // con filter seteamos todos los productos diefente al producto.idproducto
-      carrito: carrito.filter( p => p.idproducto !== producto.idproducto )
-    })
-  }
-  
+      carrito: carrito.filter((p) => p.idproducto !== producto.idproducto),
+    });
+  };
+
   vaciarCarrito = () => {
     this.setState({ carrito: [] });
   };
@@ -48,21 +57,28 @@ export class GlobalProvider extends Component {
   iniciarSesion = (usuario) => {
     this.setState({
       ...this.state,
-      usuario: usuario
-    })
-  }
+      usuario: usuario,
+    });
+  };
 
   cerrarSesion = () => {
     this.setState({
       ...this.state,
-      usuario: null
-    })
+      usuario: null,
+    });
+  };
+
+  //cada vez q se actualiza cualquieraccion tmb actializamos el localstorage
+  componentDidUpdate() {
+    localStorage.setItem("TiendaUniData", JSON.stringify(this.state));  
+    console.log("Actualizando local storage...");
   }
 
+  
   render() {
     return (
       <GlobalContext.Provider
-        value={{          
+        value={{
           // Carrito ******
           carrito: this.state.carrito,
           agregarProducto: this.agregarProducto,
@@ -71,7 +87,7 @@ export class GlobalProvider extends Component {
           // Usuario ******
           usuario: this.state.usuario,
           iniciarSesion: this.iniciarSesion,
-          cerrarSesion: this.cerrarSesion
+          cerrarSesion: this.cerrarSesion,
         }}
       >
         {this.props.children}

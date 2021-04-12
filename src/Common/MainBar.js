@@ -9,13 +9,13 @@ function MainBar(props) {
   const sesionUsuario = () => {
     return usuario ? (
       <>
-        <li className="nav-item d-flex align-items-center mr-2">
-          <h3 className="m-0">Hola!, {usuario.nombres}</h3>
+        <li className="nav-item d-flex align-items-center me-2">
+          <h6 className="m-0" style={{color:"white", fontSize:"14px"}}>Hola!, {usuario.nombres}</h6>
         </li>
         <li className="nav-item">
           <button
             onClick={() => cerrarSesion()}
-            className="btn btn-outline-dark"
+            className="btn btn-danger"
           >
             Salir
           </button>
@@ -23,7 +23,7 @@ function MainBar(props) {
       </>
     ) : (
       <li className="nav-item">
-        <Link to="/inicioSesion" className="btn btn-outline-info">
+        <Link to="/inicioSesion" className="btn btn-success">
           Iniciar Sesion
         </Link>
       </li>
